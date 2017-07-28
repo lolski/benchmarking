@@ -2,10 +2,10 @@
 //This sets properties in the Jenkins server. In this case run every 8 hours
 properties([pipelineTriggers([cron('H H/8 * * *')])])
 
-//Function to run all the tests. 
+//Function to run all the tests.
 // @param buildBranch is the branch on the repo to run against
 def buildOnBranch = { String buildBranch ->
-	def workspace = pwd()
+		def workspace = pwd()
 		//Everything is wrapped in a try catch so we can handle any test failures
 		//If one test fails then all the others will stop. I.e. we fail fast
 		try {
