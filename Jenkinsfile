@@ -59,7 +59,7 @@ def buildOnBranch = { String buildBranch ->
 					}
 				}
 
-        //Sets up environmental variables which can be shared between multiple tests
+				//Sets up environmental variables which can be shared between multiple tests
 				withEnv(['VALIDATION_DATA=/home/jenkins/readwrite_neo4j--validation_set.tar.gz',
 						'CSV_DATA=' + workspace + 'benchmarking/generate-SNB/social_network',
 						'KEYSPACE=snb',
@@ -85,6 +85,14 @@ def buildOnBranch = { String buildBranch ->
 							stage(buildBranch+' Validate Graph') {
 								sh './validate.sh'
 							}
+						}
+					}
+				}
+
+				timeout(120) {
+					dir('external-component-supervision') {
+						stage(buildBranch+' External Component Supervision') {
+							sh './external-component-supervision-test.sh'
 						}
 					}
 				}
