@@ -14,12 +14,12 @@ def buildOnBranch = { String buildBranch ->
 			timeout(15) {
 				dir('grakn') {
 					git url: 'https://github.com/graknlabs/grakn', branch: buildBranch
-						stage(buildBranch+' Build Grakn') { //Stages allow you to organise and group things within Jenkins
-							sh 'npm config set registry http://registry.npmjs.org/'
-							sh 'if [ -d ' + workspace + '/maven ] ;  then rm -rf ' + workspace + '/maven ; fi'
-							sh 'mvn versions:set "-DnewVersion=stable" "-DgenerateBackupPoms=false"'
-							sh 'mvn clean install -Dmaven.repo.local=' + workspace + '/maven -DskipTests -B -U -Djetty.log.level=WARNING -Djetty.log.appender=STDOUT'
-						}
+					stage(buildBranch+' Build Grakn') { //Stages allow you to organise and group things within Jenkins
+						sh 'npm config set registry http://registry.npmjs.org/'
+						sh 'if [ -d ' + workspace + '/maven ] ;  then rm -rf ' + workspace + '/maven ; fi'
+						sh 'mvn versions:set "-DnewVersion=stable" "-DgenerateBackupPoms=false"'
+						sh 'mvn clean install -Dmaven.repo.local=' + workspace + '/maven -DskipTests -B -U -Djetty.log.level=WARNING -Djetty.log.appender=STDOUT'
+					}
 					stage(buildBranch+' Init Grakn') {
 						sh 'if [ -d grakn-package ] ; then grakn-package/bin/grakn.sh stop ; fi'
 						sh 'if [ -d grakn-package ] ;  then rm -rf grakn-package ; fi'
@@ -40,18 +40,18 @@ def buildOnBranch = { String buildBranch ->
 					}
 				}
 			}
-            //The actual tests
+      //The actual tests
 			dir('benchmarking') {
-					checkout scm //Checkout the repo this jenkins files comes from
+				checkout scm //Checkout the repo this jenkins files comes from
 
-					timeout(30) {
-						dir('single-machine-graph-scaling') {
-						    stage(buildBranch+' Scale Test') {
-						        sh 'mvn clean -U package -Dmaven.repo.local=' + workspace + '/maven ' //Point to local repo. Not the one on the machine
-						        sh 'java -jar target/single-machine-graph-scaling-stable-allinone.jar'
-						    }
-						}
+				timeout(30) {
+					dir('single-machine-graph-scaling') {
+					    stage(buildBranch+' Scale Test') {
+					        sh 'mvn clean -U package -Dmaven.repo.local=' + workspace + '/maven ' //Point to local repo. Not the one on the machine
+					        sh 'java -jar target/single-machine-graph-scaling-stable-allinone.jar'
+					    }
 					}
+				}
 
 				dir('snb-interactive-grakn') {
 					stage(buildBranch+' Build LDBC Connector') {
@@ -59,7 +59,7 @@ def buildOnBranch = { String buildBranch ->
 					}
 				}
 
-                //Sets up environmental variables which can be shared between multiple tests
+        //Sets up environmental variables which can be shared between multiple tests
 				withEnv(['VALIDATION_DATA=/home/jenkins/readwrite_neo4j--validation_set.tar.gz',
 						'CSV_DATA=' + workspace + 'benchmarking/generate-SNB/social_network',
 						'KEYSPACE=snb',
