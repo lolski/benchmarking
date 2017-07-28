@@ -16,18 +16,18 @@ def buildOnBranch = { String buildBranch ->
 					git url: 'https://github.com/graknlabs/grakn', branch: buildBranch
 						stage(buildBranch+' Build Grakn') { //Stages allow you to organise and group things within Jenkins
 							sh 'npm config set registry http://registry.npmjs.org/'
-								sh 'if [ -d ' + workspace + '/maven ] ;  then rm -rf ' + workspace + '/maven ; fi'
-								sh 'mvn versions:set "-DnewVersion=stable" "-DgenerateBackupPoms=false"'
-								sh 'mvn clean install -Dmaven.repo.local=' + workspace + '/maven -DskipTests -B -U -Djetty.log.level=WARNING -Djetty.log.appender=STDOUT'
+							sh 'if [ -d ' + workspace + '/maven ] ;  then rm -rf ' + workspace + '/maven ; fi'
+							sh 'mvn versions:set "-DnewVersion=stable" "-DgenerateBackupPoms=false"'
+							sh 'mvn clean install -Dmaven.repo.local=' + workspace + '/maven -DskipTests -B -U -Djetty.log.level=WARNING -Djetty.log.appender=STDOUT'
 						}
 					stage(buildBranch+' Init Grakn') {
 						sh 'if [ -d grakn-package ] ; then grakn-package/bin/grakn.sh stop ; fi'
-							sh 'if [ -d grakn-package ] ;  then rm -rf grakn-package ; fi'
-							sh 'mkdir grakn-package'
-							sh 'tar -xf grakn-dist/target/grakn-dist*.tar.gz --strip=1 -C grakn-package'
-							//todo: remove the timeout hack when problem resolved
-							sh 'sed -i.bak \'s/30/120/\' grakn-package/bin/grakn-engine.sh'
-							sh 'grakn-package/bin/grakn.sh start'
+						sh 'if [ -d grakn-package ] ;  then rm -rf grakn-package ; fi'
+						sh 'mkdir grakn-package'
+						sh 'tar -xf grakn-dist/target/grakn-dist*.tar.gz --strip=1 -C grakn-package'
+						//todo: remove the timeout hack when problem resolved
+						sh 'sed -i.bak \'s/30/120/\' grakn-package/bin/grakn-engine.sh'
+						sh 'grakn-package/bin/grakn.sh start'
 					}
 					stage(buildBranch+' Test Connection') {
 						sh 'grakn-package/bin/graql.sh -e "match \\\$x;"' //Sanity sheck query. I.e. is everything working?
@@ -35,14 +35,14 @@ def buildOnBranch = { String buildBranch ->
 				}
 				dir('ldbc-driver') {
 					git url: 'https://github.com/ldbc/ldbc_driver', branch: 'master'
-						stage(buildBranch+' Build LDBC Driver') {
-							sh 'mvn -U clean install -DskipTests -Dmaven.repo.local=' + workspace + '/maven '
-						}
+					stage(buildBranch+' Build LDBC Driver') {
+						sh 'mvn -U clean install -DskipTests -Dmaven.repo.local=' + workspace + '/maven '
+					}
 				}
 			}
             //The actual tests
 			dir('benchmarking') {
-				checkout scm //Checkout the repo this jenkins files comes from
+					checkout scm //Checkout the repo this jenkins files comes from
 
 					timeout(30) {
 						dir('single-machine-graph-scaling') {
@@ -104,10 +104,10 @@ def buildOnBranch = { String buildBranch ->
 				dir('grakn') {
 					stage(buildBranch+' Tear Down Grakn') {
 						sh 'if [ -d ' + workspace + '/maven ] ;  then rm -rf ' + workspace + '/maven ; fi'
-							sh 'cp grakn-package/logs/grakn.log '+buildBranch+'.log'
-							archiveArtifacts artifacts: buildBranch+'.log'
-							sh 'grakn-package/bin/grakn.sh stop'
-							sh 'if [ -d grakn-package ] ;  then rm -rf grakn-package ; fi'
+						sh 'cp grakn-package/logs/grakn.log '+buildBranch+'.log'
+						archiveArtifacts artifacts: buildBranch+'.log'
+						sh 'grakn-package/bin/grakn.sh stop'
+						sh 'if [ -d grakn-package ] ;  then rm -rf grakn-package ; fi'
 					}
 				}
 			}
