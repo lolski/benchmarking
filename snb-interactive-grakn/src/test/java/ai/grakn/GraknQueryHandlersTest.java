@@ -96,12 +96,18 @@ public class GraknQueryHandlersTest extends TestCase {
 
     @Test
     public void testQuery1Execution() throws DbException {
+        // This query is REALLY slow so not registering it in GraphDb
         LdbcQuery1 mockQuery = mock(LdbcQuery1.class);
 
         // validation
         when(mockQuery.personId()).thenReturn(1099511628726L);
         when(mockQuery.firstName()).thenReturn("Ken");
         when(mockQuery.limit()).thenReturn(20);
+        doAnswer(invocationOnMock -> {
+            Object[] args = invocationOnMock.getArguments();
+            System.out.println(args[1]);
+            return null;
+        }).when(mockReporter).report(anyInt(),any(),any());
 
         GraknQueryHandlers.LdbcQuery1Handler query1Handler = new GraknQueryHandlers.LdbcQuery1Handler();
         query1Handler.executeOperation(mockQuery,mockConnectionState,mockReporter);

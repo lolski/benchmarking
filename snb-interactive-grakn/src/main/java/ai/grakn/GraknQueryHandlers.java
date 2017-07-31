@@ -4,6 +4,7 @@ import ai.grakn.concept.Concept;
 import ai.grakn.concept.ConceptId;
 import ai.grakn.concept.Entity;
 import ai.grakn.concept.Label;
+import ai.grakn.concept.Resource;
 import ai.grakn.graql.MatchQuery;
 import ai.grakn.graql.Order;
 import ai.grakn.graql.Var;
@@ -25,6 +26,7 @@ import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery8Result;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,6 +46,9 @@ public class GraknQueryHandlers {
     static VarPattern hasCreatorType = var().label("has-creator");
     static VarPattern replyOf = var().label("reply-of");
     static VarPattern reply = var().label("reply");
+    static VarPattern isLocatedIn = var().label("is-located-in");
+    static VarPattern workAt = var().label("work-at");
+    static VarPattern studyAt = var().label("study-at");
 
     static Label personID = Label.of("person-id");
     static Label creationDate = Label.of("creation-date");
@@ -56,7 +61,9 @@ public class GraknQueryHandlers {
     static Label gender = Label.of("gender");
     static Label browserUsed = Label.of("browser-used");
     static Label locationIp = Label.of("location-ip");
-
+    static Label email = Label.of("email");
+    static Label language = Label.of("language");
+    static Label name = Label.of("name");
 
     static Var thePerson = var("person");
     static Var aMessage = var("aMessage");
@@ -190,6 +197,8 @@ public class GraknQueryHandlers {
                 Var aFriendBirthday = var("aFriendBirthday");
                 Var aFriendCreationDate = var("aFriendCreationDate");
 
+                match(thePerson.has(personID, var().val(ldbcQuery1.personId()))).withGraph(graknGraph).
+                        execute();
                 // for speed fetch the Grakn id first
                 ConceptId graknPersonId = match(thePerson.has(personID, var().val(ldbcQuery1.personId()))).withGraph(graknGraph).
                         execute().iterator().next().get(thePerson).getId();
@@ -209,16 +218,30 @@ public class GraknQueryHandlers {
                                 has(personID, aFriendId),
                         thePerson.neq(aFriend));
                 List<Answer> distance1Result = matchQuery.withGraph(graknGraph).orderBy(aFriendLastName, Order.asc).execute();
-//                distance1Result.stream().limit(ldbcQuery1.limit()).map(map -> new LdbcQuery1Result(
-//                        resource(map, aFriendId),
-//                        resource(map, aFriendLastName),
-//                        1,
-//                        getSingleDateResource(map.get(aFriend).asEntity(), personBirthday, graknGraph),
-//                        getSingleDateResource(map.get(aFriend).asEntity(), creationDate, graknGraph),
-//                        getSingleResource(map.get(aFriend).asEntity(), gender, graknGraph),
-//                        getSingleResource(map.get(aFriend).asEntity(), browserUsed, graknGraph),
-//                        getSingleResource(map.get(aFriend).asEntity(), locationIp, graknGraph)
-//                ));
+                List<LdbcQuery1Result> distance1LdbcResult = distance1Result.stream().limit(ldbcQuery1.limit()).map(map -> {
+                    // this query gets all of the additional related material, excluding resources
+                    Var aLocation = var("aLocation");
+                    MatchQuery additionalInfo = match(
+                            aFriend.has(personID, getSingleResource(map.get(aFriend).asEntity(), personID, graknGraph)),
+                            var().rel(aFriend).rel(aLocation).isa(isLocatedIn));
+                    Answer additionalResult = additionalInfo.withGraph(graknGraph).execute().iterator().next();
+
+                    // populate the result with resources using graphAPI and relations from additional info query
+                    return new LdbcQuery1Result(
+                            resource(map, aFriendId),
+                            resource(map, aFriendLastName),
+                            1,
+                            getSingleDateResource(map.get(aFriend).asEntity(), personBirthday, graknGraph),
+                            getSingleDateResource(map.get(aFriend).asEntity(), creationDate, graknGraph),
+                            getSingleResource(map.get(aFriend).asEntity(), gender, graknGraph),
+                            getSingleResource(map.get(aFriend).asEntity(), browserUsed, graknGraph),
+                            getSingleResource(map.get(aFriend).asEntity(), locationIp, graknGraph),
+                            getListResources(map.get(aFriend).asEntity(), email, graknGraph),
+                            getListResources(map.get(aFriend).asEntity(), language, graknGraph),
+                            getSingleResource(additionalResult.get(aLocation).asEntity(), name, graknGraph),
+                            new ArrayList<List<Object>>(),
+                            new ArrayList<List<Object>>());
+                }).collect(Collectors.toList());
                 if (distance1Result.size() < ldbcQuery1.limit()) {
                     matchQuery = match(thePerson.id(graknPersonId),
                             var().rel(thePerson).rel(anyone).isa(knowsType),
@@ -227,30 +250,33 @@ public class GraknQueryHandlers {
                             thePerson.neq(aFriend)
                             );
                     List<Answer> distance2Result = matchQuery.withGraph(graknGraph).orderBy(aFriendLastName, Order.asc).execute();
-                    System.out.println(distance2Result);
-                    if (distance1Result.size() + distance2Result.size() < ldbcQuery1.limit()) {
-                        matchQuery = match(thePerson.id(graknPersonId),
-                                var().rel(thePerson).rel(anyone).isa(knowsType),
-                                var().rel(anyone).rel(anyoneElse).isa(knowsType),
-                                var().rel(anyoneElse).rel(aFriend).isa(knowsType),
-                                aFriend.has(personFirstName,var().val(ldbcQuery1.firstName())).has(personLastName,aFriendLastName),
-                                thePerson.neq(aFriend),
-                                aFriend.neq(anyone)
-                        );
-                        List<Answer> distance3Result = matchQuery.withGraph(graknGraph).orderBy(aFriendLastName, Order.asc).execute();
-                        System.out.println(distance3Result);
-                    }
+//                    if (distance1Result.size() + distance2Result.size() < ldbcQuery1.limit()) {
+//                        matchQuery = match(thePerson.id(graknPersonId),
+//                                var().rel(thePerson).rel(anyone).isa(knowsType),
+//                                var().rel(anyone).rel(anyoneElse).isa(knowsType),
+//                                var().rel(anyoneElse).rel(aFriend).isa(knowsType),
+//                                aFriend.has(personFirstName,var().val(ldbcQuery1.firstName())).has(personLastName,aFriendLastName),
+//                                thePerson.neq(aFriend),
+//                                aFriend.neq(anyone)
+//                        );
+//                        List<Answer> distance3Result = matchQuery.withGraph(graknGraph).orderBy(aFriendLastName, Order.asc).execute();
+//                    }
                 }
+                resultReporter.report(0, distance1LdbcResult, ldbcQuery1);
             }
         }
 
-        private Object getSingleResource(Entity entity, Label resourceType, GraknGraph graknGraph) {
-            return entity.resources(graknGraph.getResourceType(resourceType.toString())).
+        private <T> T getSingleResource(Entity entity, Label resourceType, GraknGraph graknGraph) {
+            return (T) entity.resources(graknGraph.getResourceType(resourceType.toString())).
                     iterator().next().getValue();
         }
         private long getSingleDateResource(Entity entity, Label resourceType, GraknGraph graknGraph) {
             return ((LocalDateTime) getSingleResource(entity, resourceType, graknGraph)).
                     toInstant(ZoneOffset.UTC).toEpochMilli();
+        }
+        private <T> List<T> getListResources(Entity entity, Label resourceType, GraknGraph graknGraph) {
+            Collection<Resource<?>> rawResources = entity.resources(graknGraph.getResourceType(resourceType.toString()));
+            return rawResources.stream().map((resource) -> (T) resource.getValue()).collect(Collectors.<T>toList());
         }
     }
 
