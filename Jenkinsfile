@@ -55,7 +55,7 @@ def buildOnBranch = { String buildBranch ->
 
 				dir('snb-interactive-grakn') {
 					stage(buildBranch+' Build LDBC Connector') {
-						sh 'mvn -U clean install assembly:single -Dmaven.repo.local=' + workspace + '/maven '
+						sh 'mvn -U clean install assembly:single -Dmaven.repo.local=' + workspace + '/maven -DskipTests'
 					}
 				}
 
