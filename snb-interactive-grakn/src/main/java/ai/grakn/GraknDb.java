@@ -20,8 +20,8 @@ public class GraknDb extends Db {
     protected void onInit(Map<String, String> properties, LoggingService loggingService) throws DbException {
         connectionState = new GraknDbConnectionState(properties);
 
+        // TODO: disabling a lot because they are slow
         registerOperationHandler(LdbcShortQuery1PersonProfile.class, GraknShortQueryHandlers.LdbcShortQuery1PersonProfileHandler.class);
-        // TODO: disabling because they are slow
 //        registerOperationHandler(LdbcShortQuery2PersonPosts.class, GraknShortQueryHandlers.LdbcShortQuery2PersonPostsHandler.class);
 //        registerOperationHandler(LdbcShortQuery3PersonFriends.class, GraknShortQueryHandlers.LdbcShortQuery3PersonFriendsHandler.class);
         registerOperationHandler(LdbcShortQuery4MessageContent.class, GraknShortQueryHandlers.LdbcShortQuery4MessageContentHandler.class);
@@ -38,11 +38,9 @@ public class GraknDb extends Db {
         registerOperationHandler(LdbcUpdate7AddComment.class, GraknUpdateQueryHandlers.LdbcUpdate7AddCommentHandler.class);
         registerOperationHandler(LdbcUpdate8AddFriendship.class, GraknUpdateQueryHandlers.LdbcUpdate8AddFriendshipHandler.class);
 
-        // TODO: this is way too slow so disabling
 //        registerOperationHandler(LdbcQuery1.class, GraknQueryHandlers.LdbcQuery1Handler.class);
         registerOperationHandler(LdbcQuery2.class, GraknQueryHandlers.LdbcQuery2Handler.class);
-        registerOperationHandler(LdbcQuery8.class, GraknQueryHandlers.LdbcQuery8Handler.class);
-        // TODO: this implementation is tested and works - disabled because it times out validation
+//        registerOperationHandler(LdbcQuery8.class, GraknQueryHandlers.LdbcQuery8Handler.class);
 //        registerOperationHandler(LdbcQuery13.class, GraknQueryHandlers.LdbcQuery13Handler.class);
 
     }
