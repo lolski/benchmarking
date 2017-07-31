@@ -117,5 +117,5 @@ def buildOnBranch = { String buildBranch ->
 //Key - Value dictionary of jobs to run
 //For example for the first one "master" is the key it is saying to run a job on node('slave3') and that job is buildOnBranch(masterBranch)
 //For each entry in the dictionary a parallel job is run. Except for the last entry which is magic used to fail fast. In this case it allows each branch to run even if one fails.
-def jobs = ['master':{node('slave3'){masterBranch = 'master'; buildOnBranch(masterBranch)}}, 'stable':{node('slave1'){stableBranch = 'stable'; buildOnBranch(stableBranch)}}, failFast: false]
+def jobs = ['master':{node('slave2'){masterBranch = 'master'; buildOnBranch(masterBranch)}}, 'stable':{node('slave2'){stableBranch = 'stable'; buildOnBranch(stableBranch)}}, failFast: false]
 parallel jobs
